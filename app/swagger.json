@@ -1,0 +1,44 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Flask API",
+    "description": "API for making predictions with a trained model",
+    "version": "1.0.0"
+  },
+  "host": "127.0.0.1:5000",
+  "basePath": "/",
+  "paths": {
+    "/predict": {
+      "post": {
+        "summary": "Make a prediction",
+        "description": "Sends data to the model and returns the prediction",
+        "parameters": [
+          {
+            "name": "features",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prediction result",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "prediction": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
