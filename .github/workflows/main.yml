@@ -14,17 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-
-      - name: Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-
-      - name: Install dependencies with Poetry
-        run: poetry install --no-dev
-
       - name: Build Docker Image
         run: docker build -t flask-app .
 
@@ -37,17 +26,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-
-      - name: Install Locust
-        run: pip install locust
-
       - name: Run Flask Docker Container
         run: |
           docker run -d -p 7001:7000 flask-app  # Run the Flask app in detached mode
+
+      - name: Install Locust
+        run: pip install locust
 
       - name: Run Locust Load Tests
         run: |
