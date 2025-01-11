@@ -50,6 +50,7 @@ def train_model(args):
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {epoch_loss / len(train_loader)}")
 
     # Save the trained model
+    model_path = 'app/model.pth'  # Save model inside the app directory
     torch.save(model.state_dict(), args.model_path)
     print(f"Model saved to {args.model_path}")
 
