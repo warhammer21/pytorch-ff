@@ -53,6 +53,18 @@ def train_model(args):
     model_path = 'app/model.pth'  # Save model inside the app directory
     torch.save(model.state_dict(), args.model_path)
     print(f"Model saved to {args.model_path}")
+    dummy_input = torch.randn(1, 2)  # Adjust the input shape to match your model
+    onnx_path = 'app/model.onnx'  # Save model inside the app directory
+    torch.onnx.export(
+        model,                      # The model to export
+        dummy_input,                # A dummy input with the correct shape
+        onnx_path,                  # File path to save the ONNX model
+        export_params=True,         # Store the trained parameters (weights)
+        opset_version=11,           # The ONNX version to use
+        input_names=['input'],      # Name for the model input
+        output_names=['output'],    # Name for the model output
+    )
+    print(f"ONNX model saved to {onnx_path}")
 
 
 def main():
