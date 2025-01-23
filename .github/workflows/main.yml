@@ -1,29 +1,40 @@
-name: CI Workflow
+name: Flask CI Pipeline
 
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch
-  pull_request:
-    branches:
-      - main  # Trigger on pull request to main branch
+      - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # GitHub hosted runner
+  ci:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3  # Checkout the code
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v2  # Set up Docker buildx
+      # Step 2: Build Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t flask-app:latest .  # Build the image and tag it as flask-app:latest
+          docker images  # List all Docker images to verify the image was built correctly
 
-    - name: Build Docker image
-      run: |
-        docker build -t flask-app .  # Build the image with the tag `flask-app`
+      # Step 3: Run Flask Docker container
+      - name: Run Flask Docker Container
+        run: |
+          docker run -d -p 7001:7000 flask-app:latest  # Run the Flask app container on port 7001
 
-    - name: Verify image build
-      run: |
-        docker images  # Verify if the image is built successfully
+      # Step 4: Install Locust
+      - name: Install Locust
+        run: pip install locust
 
+      # Step 5: Run Locust Load Tests
+      - name: Run Locust Load Tests
+        run: |
+          locust -f locustfile.py --headless --users 100 --spawn-rate 10 --host=http://localhost:7001
+
+      # Step 6: Stop Flask Docker container after testing
+      - name: Stop Flask Docker Container
+        run: |
+          docker ps -q --filter "ancestor=flask-app" | xargs docker stop  # Stop the container after tests
