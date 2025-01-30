@@ -1,0 +1,107 @@
+name: Flask CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout Code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Install Dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # Step 3: Run Model Unit Tests
+      - name: Run Model Unit Tests
+        run: |
+          pytest tests/
+
+      # Step 4: Validate ONNX Model
+      - name: Validate ONNX Model
+        run: |
+          python scripts/validate_onnx.py
+
+      # Step 5: Security Scan
+      - name: Security Scan
+        run: |
+          pip install safety
+          safety check --full-report
+
+      # Step 6: Build New Docker Image
+      - name: Build New Docker Image
+        run: |
+          docker build -t new-flask-app:latest .
+          docker images
+
+      # Step 7: Run Old Version (Simulating Existing Deployed App)
+      - name: Run Old Flask App
+        run: |
+          docker run -d --name old-app -p 7002:7000 new-flask-app:latest
+
+      # Step 8: Run New Version (Canary Release)
+      - name: Run New Flask App (Canary)
+        run: |
+          docker run -d --name new-app -p 7003:7000 new-flask-app:latest
+
+      # Step 9: Deploy NGINX for Canary Traffic Split
+      - name: Deploy NGINX for Canary
+        run: |
+          cat <<EOF > nginx.conf
+          events {}
+          http {
+            upstream backend {
+              server old-app:7000 weight=9; # 90% Traffic
+              server new-app:7000 weight=1; # 10% Traffic
+            }
+            server {
+              listen 7001;
+              location / {
+                proxy_pass http://backend;
+              }
+            }
+          }
+          EOF
+
+          docker run -d --name nginx-proxy -p 7001:7001 --network=host -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf nginx:latest
+          sleep 5
+
+      # Step 10: Health Check New App
+      - name: Health Check New App
+        run: |
+          curl --fail http://localhost:7003/health || exit 1
+
+      # Step 11: Run Load Testing
+      - name: Install Locust & Run Load Tests
+        run: |
+          pip install locust
+          locust -f locustfile.py --headless --users 100 --spawn-rate 10 --host=http://localhost:7001
+
+      # Step 12: Increase Traffic to 50%
+      - name: Increase Traffic to 50%
+        run: |
+          sed -i 's/server old-app:7000 weight=9;/server old-app:7000 weight=5;/' nginx.conf
+          sed -i 's/server new-app:7000 weight=1;/server new-app:7000 weight=5;/' nginx.conf
+          docker restart nginx-proxy
+          sleep 5
+
+      # Step 13: Increase Traffic to 100% (Full Cutover)
+      - name: Full Traffic Shift
+        run: |
+          sed -i 's/server old-app:7000 weight=5;/server old-app:7000 weight=0;/' nginx.conf
+          sed -i 's/server new-app:7000 weight=5;/server new-app:7000 weight=10;/' nginx.conf
+          docker restart nginx-proxy
+          sleep 5
+
+      # Step 14: Stop Old Version After Cutover
+      - name: Remove Old App
+        run: |
+          docker stop old-app && docker rm old-app
+          echo "Old version removed!"
