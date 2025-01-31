@@ -29,6 +29,9 @@ jobs:
       - name: Install Locust
         run: pip install locust
 
+      - name: Test Flask API before Load Test
+        run: curl -f http://localhost:7001/health || exit 1
+
       # Step 5: Run Load Tests
       - name: Run Locust Load Tests
         run: |
