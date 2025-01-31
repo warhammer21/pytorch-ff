@@ -54,6 +54,7 @@ jobs:
         #run: python scripts/validate_onnx.py
         run: echo "Simulating traffic shift to Canary..."
 
+
   canary-deployment:
     runs-on: ubuntu-latest
     needs: model-health-check  # Deploy only if model passes validation
