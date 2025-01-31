@@ -32,7 +32,8 @@ jobs:
       # Step 5: Run Load Tests
       - name: Run Locust Load Tests
         run: |
-          locust -f locustfile.py --headless --users 100 --spawn-rate 10 --host=http://localhost:7001
+          locust -f locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://localhost:7001
+
 
       # Step 6: Stop Flask Docker Container
       - name: Stop Flask Docker Container
