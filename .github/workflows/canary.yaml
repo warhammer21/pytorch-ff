@@ -25,9 +25,16 @@ jobs:
       - name: Install Locust
         run: pip install locust
 
+      - name: Wait for Flask API to be Ready
+        run: |
+          for i in {1..10}; do
+            curl -f http://localhost:7011/health && break || sleep 3
+          done
+
       - name: Test Flask API before Load Test
         run: |
-          curl -f http://localhost:7011/health || exit 1
+          curl -f http://localhost:7011/health || (docker logs flask_container && exit 1)
+
 
       - name: Run Locust Load Tests
         run: |
