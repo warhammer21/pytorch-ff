@@ -14,7 +14,7 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 # Load the trained model
 model = Net()
-model.load_state_dict(torch.load("app/model.pth"))  # Load the model from 'app' folder
+model.load_state_dict(torch.load("model.pth"))
 model.eval()  # Set model to evaluation mode
 
 # Serve the Swagger JSON file from the 'app' directory
