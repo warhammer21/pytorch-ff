@@ -57,7 +57,7 @@ jobs:
 
       - name: Validate ONNX Model
         run: |
-          python scripts/validate_onnx.py || exit 1
+          python app/validate_onnx.py || exit 1
 
   canary-deployment:
     runs-on: ubuntu-latest
