@@ -5,6 +5,7 @@ on:
     branches:
       - canary-deployment
 
+
 jobs:
   ci:
     runs-on: ubuntu-latest
