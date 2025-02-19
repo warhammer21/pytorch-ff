@@ -13,20 +13,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build Docker Image
         run: |
-          docker build -t flask-app:latest .
+          docker buildx build --cache-to type=local,dest=/tmp/.buildx-cache --cache-from type=local,src=/tmp/.buildx-cache -t flask-app:latest .
           docker images
 
-      - name: Save Docker Image as Artifact
+      - name: Save Docker Image to Tarball
         run: |
-          docker save flask-app:latest -o flask-app.tar
+          docker save flask-app:latest -o flask-app-latest.tar
+          echo "Docker image saved as flask-app-latest.tar"
 
       - name: Upload Docker Image Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: flask-app-image
-          path: flask-app.tar
+          path: flask-app-latest.tar
 
       - name: Run Flask Docker Container
         run: |
@@ -61,20 +73,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download Docker Image Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: flask-app-image
+          path: .
 
-      - name: Load Docker Image
+      - name: Load Docker Image from Tarball
         run: |
-          docker load -i flask-app.tar
-
-      - name: Install ONNX Runtime
-        run: pip install onnxruntime
+          docker load -i flask-app-latest.tar
+          echo "Docker image loaded from flask-app-latest.tar"
 
       - name: Validate ONNX Model
         run: |
-          docker run --rm -v $PWD/app:/app flask-app:latest python /app/validate_onnx.py || exit 1
+          docker run --rm flask-app:latest python /app/validate_onnx.py || exit 1
 
   canary-deployment:
     runs-on: ubuntu-latest
@@ -85,25 +96,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download Docker Image Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: flask-app-image
+          path: .
 
-      - name: Load Docker Image
+      - name: Load Docker Image from Tarball
         run: |
-          docker load -i flask-app.tar
-
-      - name: Build New Canary Image (Tagging Same Image)
-        run: |
-          docker tag flask-app:latest flask-app:canary
-          docker images
+          docker load -i flask-app-latest.tar
+          echo "Docker image loaded from flask-app-latest.tar"
 
       - name: Deploy New Canary Version
         run: |
-          docker run -d --name canary_flask -p 7012:7000 flask-app:canary
-
-      - name: Install Locust
-        run: pip install locust
+          docker run -d --name canary_flask -p 7012:7000 flask-app:latest
 
       - name: Test Canary Health Endpoint
         run: |
