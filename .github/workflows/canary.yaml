@@ -57,7 +57,7 @@ jobs:
 
       - name: Validate ONNX Model
         run: |
-          python app/validate_onnx.py || exit 1
+          docker run --rm -v $PWD/app:/app flask-app:latest python /app/validate_onnx.py || exit 1
 
   canary-deployment:
     runs-on: ubuntu-latest
