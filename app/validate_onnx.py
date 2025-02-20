@@ -5,7 +5,7 @@ from nn_model import Net  # Import the model class for reference
 def validate_onnx_model():
     # Load the PyTorch model (for reference in case you want to compare results)
     model = Net()
-    model.load_state_dict(torch.load("app/model.pth"))
+    model.load_state_dict(torch.load("/app/model.pth"))
     model.eval()  # Set the model to evaluation mode
 
     try:
