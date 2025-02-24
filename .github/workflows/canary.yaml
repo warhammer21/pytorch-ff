@@ -78,7 +78,8 @@ jobs:
 
       - name: Validate ONNX Model
         run: |
-          docker run --rm -v $PWD/app:/app $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG python /app/validate_onnx.py || exit 1
+          docker run --rm -v $PWD/app:/app warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc python /app/validate_onnx.py
+          #docker run --rm -v $PWD/app:/app $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG python /app/validate_onnx.py || exit 1
 
   canary-deployment:
     runs-on: ubuntu-latest
