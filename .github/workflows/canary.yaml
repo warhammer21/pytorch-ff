@@ -65,7 +65,7 @@ jobs:
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Pull Docker Image
-        run:docker pull warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc
+        run: docker pull warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc
         #run: docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
       - name:Debug: List Files in Current Directory
         run: ls -lah $PWD
