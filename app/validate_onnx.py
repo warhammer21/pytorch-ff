@@ -10,7 +10,7 @@ def validate_onnx_model():
 
     try:
         # Load the ONNX model using ONNX Runtime
-        onnx_model_path = "app/model.onnx"
+        onnx_model_path = "model.onnx"
         session = ort.InferenceSession(onnx_model_path)
 
         # Get model input details
@@ -26,7 +26,7 @@ def validate_onnx_model():
             raise ValueError(f"Model input shape mismatch: Expected [None, 2], got {input_shape}")
 
         # Dummy input for testing: (batch_size=1, features=2)
-        dummy_input = torch.tensor([[0.5, 0.5]], dtype=torch.float32).unsqueeze(0)
+        dummy_input = torch.tensor([[0.5, 0.5]], dtype=torch.float32)  # Keep it 2D
 
         # Perform inference using PyTorch model (for comparison)
         with torch.no_grad():
