@@ -22,37 +22,37 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-#      - name: Build Docker Image
-#        run: |
-#          docker build -t $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG .
-#          docker images
-#
-#      - name: Push Docker Image
-#        run: docker push $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
-#
-#      - name: Run Flask Docker Container
-#        run: |
-#          docker run -d --name flask_container -p 7011:7000 $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
-#
-#      - name: Install Locust
-#        run: pip install locust
-#
-#      - name: Wait for Flask API to be Ready
-#        run: |
-#          for i in {1..10}; do
-#            curl -f http://localhost:7011/health && break || sleep 3
-#          done
-#
-#      - name: Test Flask API before Load Test
-#        run: |
-#          curl -f http://localhost:7011/health || (docker logs flask_container && exit 1)
-#
-#      - name: Run Locust Load Tests
-#        run: |
-#          locust -f locustfile.py --headless --users 10 --spawn-rate 2 --run-time 30s --host=http://localhost:7011
-#
-#      - name: Stop Flask Docker Container
-#        run: docker stop flask_container
+      - name: Build Docker Image
+        run: |
+          docker build -t $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG .
+          docker images
+
+      - name: Push Docker Image
+        run: docker push $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Run Flask Docker Container
+        run: |
+          docker run -d --name flask_container -p 7011:7000 $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Install Locust
+        run: pip install locust
+
+      - name: Wait for Flask API to be Ready
+        run: |
+          for i in {1..10}; do
+            curl -f http://localhost:7011/health && break || sleep 3
+          done
+
+      - name: Test Flask API before Load Test
+        run: |
+          curl -f http://localhost:7011/health || (docker logs flask_container && exit 1)
+
+      - name: Run Locust Load Tests
+        run: |
+          locust -f locustfile.py --headless --users 10 --spawn-rate 2 --run-time 30s --host=http://localhost:7011
+
+      - name: Stop Flask Docker Container
+        run: docker stop flask_container
 
   model-health-check:
     runs-on: ubuntu-latest
@@ -66,8 +66,8 @@ jobs:
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Pull Docker Image
-        run: docker pull warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc
-        #run: docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+        #run: docker pull warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc
+        run: docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
       - name: List Files in Current Directory
         run: ls -lah $PWD
 
@@ -79,8 +79,8 @@ jobs:
 
       - name: Validate ONNX Model
         run: |
-          docker run --rm -v $PWD/app:/app warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc python /app/validate_onnx.py
-          #docker run --rm -v $PWD/app:/app $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG python /app/validate_onnx.py || exit 1
+          #docker run --rm -v $PWD/app:/app warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc python /app/validate_onnx.py
+          docker run --rm -v $PWD/app:/app $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG python /app/validate_onnx.py || exit 1
 
   canary-deployment:
     runs-on: ubuntu-latest
