@@ -82,6 +82,7 @@ jobs:
           docker run --rm -v $PWD/app:/app $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG python /app/validate_onnx.py || exit 1
   push-stable:
     runs-on: ubuntu-latest
+    needs: ci
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
