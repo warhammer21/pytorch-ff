@@ -1,6 +1,5 @@
 name: Flask CI/CD Pipeline with Canary Deployment
 
-
 on:
   push:
     branches:
@@ -14,7 +13,6 @@ env:
 jobs:
   ci:
     runs-on: ubuntu-latest
-
 
     steps:
       - name: Checkout code
@@ -82,6 +80,23 @@ jobs:
         run: |
           #docker run --rm -v $PWD/app:/app warhammer21/flask-app:canary-deployment-9bd50c5a4ab458c4086b9f0434bec85ed26134dc python /app/validate_onnx.py
           docker run --rm -v $PWD/app:/app $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG python /app/validate_onnx.py || exit 1
+  push-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Pull Latest Image
+        run: docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
+
+      - name: Tag as Stable
+        run: docker tag $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:stable
+
+      - name: Push Stable Image
+        run: docker push $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:stable
 
   canary-deployment:
     runs-on: ubuntu-latest
@@ -94,26 +109,36 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Pull Docker Image
-        run: docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
-
-      - name: Deploy New Canary Version
+      - name: Pull Docker Images
         run: |
-          docker run -d --name canary_flask -p 7012:7000 $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+          docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+          docker pull $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:stable  # OLD Model
 
-      - name: Test Canary Health Endpoint
+      - name: Run Old (Stable) Version
+        run: docker run -d --name flask_old -p 7011:7000 $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:stable
+
+      - name: Run New (Canary) Version
+        run: docker run -d --name flask_canary -p 7012:7000 $REGISTRY/${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Run NGINX for Traffic Splitting
         run: |
-          curl -f http://localhost:7012/health || exit 1
+          docker run -d --name nginx_lb -p 80:80 -v $PWD/nginx.conf:/etc/nginx/nginx.conf nginx
 
-      - name: Run Canary Load Tests
+      - name: Gradually Shift Traffic to Canary
         run: |
-          locust -f locustfile.py --headless --users 5 --spawn-rate 1 --run-time 15s --host=http://localhost:7012
+          for weight in 10 25 50 75 100; do
+            echo "Shifting traffic: $weight% to Canary..."
+            sed -i "s/weight=[0-9]\+/weight=$weight/" nginx.conf
+            docker restart nginx_lb
+            sleep 10  # Wait for monitoring
+          done
 
-      - name: Simulate Traffic Shift to Canary
+      - name: Monitor Errors & Rollback if Necessary
         run: |
-          echo "Simulating gradual traffic shift..."
-          sleep 5
-          echo "Canary is stable, proceeding with rollout!"
-
-      - name: Cleanup
-        run: docker stop canary_flask
+          ERROR_COUNT=$(curl -s http://localhost/health | jq '.error_rate')
+          if [ "$ERROR_COUNT" -gt 5 ]; then
+            echo "Error rate too high! Rolling back..."
+            sed -i "s/weight=[0-9]\+/weight=100/" nginx.conf  # Route all traffic to OLD
+            docker restart nginx_lb
+            exit 1
+          fi
