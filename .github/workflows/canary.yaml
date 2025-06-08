@@ -100,8 +100,7 @@ jobs:
 
   canary-deployment:
     runs-on: ubuntu-latest
-    needs: ci
-    #needs: model-health-check
+    needs: tag-and-push-stable
 
     steps:
       - name: Checkout code
@@ -136,10 +135,20 @@ jobs:
 
       - name: Monitor Errors & Rollback if Necessary
         run: |
-          ERROR_COUNT=$(curl -s http://localhost/health | jq '.error_rate')
+          ERROR_COUNT=$(curl -sf http://localhost/health | jq '.error_rate // 0')
+
+          # Fallback if empty or not a number
+          if ! [[ "$ERROR_COUNT" =~ ^[0-9]+$ ]]; then
+            echo "Invalid or missing error_rate. Assuming 0."
+            ERROR_COUNT=0
+          fi
+
           if [ "$ERROR_COUNT" -gt 5 ]; then
             echo "Error rate too high! Rolling back..."
-            sed -i "s/weight=[0-9]\+/weight=100/" nginx.conf  # Route all traffic to OLD
+            sed -i "s/weight=[0-9]\+/weight=100/" nginx.conf
             docker restart nginx_lb
             exit 1
+          else
+            echo "Canary looks healthy. Continuing..."
           fi
+
