@@ -12,7 +12,7 @@ The system includes built-in **error monitoring and automatic rollback** to ensu
 ---
 
 
-## ⚙️ Architecture Summary
+## Architecture Summary
 
 ```plaintext
 +---------+        +------------------+        +------------------+
@@ -31,7 +31,7 @@ The system includes built-in **error monitoring and automatic rollback** to ensu
                             +---------------------+
 
 ```
-## 📂 Directory Structure
+## Directory Structure
 
 ```plaintext
 .
@@ -58,8 +58,7 @@ The system includes built-in **error monitoring and automatic rollback** to ensu
 
 ---
 
-### (Optional) Model Health Check (`model-health-check`)
-> *You commented this out during testing, but it’s still valuable.*
+### Model Health Check (`model-health-check`)
 
 1. **Pull Canary Image**: Downloads the newly built Docker image.
 2. **Validate ONNX Model**: Uses `onnxruntime` to verify that:
