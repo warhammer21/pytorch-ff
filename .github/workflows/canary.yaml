@@ -3,7 +3,7 @@ name: Flask CI/CD Pipeline with Canary Deployment
 on:
   push:
     branches:
-      - canary-deployment
+      - main
 
 env:
   IMAGE_NAME: flask-app
