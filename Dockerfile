@@ -21,3 +21,6 @@ EXPOSE 5000
 
 # Run the Flask app
 CMD ["python", "app/flask_app.py"]
+# http://127.0.0.1:7011/
+# docker run -d --name flask_container -p 7011:7000 flask-app:latest
+
