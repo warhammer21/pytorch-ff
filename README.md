@@ -132,4 +132,3 @@ To trigger the CI/CD pipeline and initiate a canary deployment:
 ```bash
 git checkout canary-deployment
 git push origin canary-deployment
-
