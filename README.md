@@ -2,12 +2,12 @@
 
 ##  Overview
 
-This project implements a **CI/CD pipeline** for deploying a Flask-based Machine Learning API using **GitHub Actions**, **Docker**, and a custom **canary deployment strategy** with **NGINX-based traffic splitting**. It includes:
+## Controlled Rollout with Canary Strategy for a Deep Learning API
 
-- Model validation (with ONNX)
-- Performance/load testing (via Locust)
-- Gradual traffic shifting from a stable version to a canary version
-- Automatic rollback if errors exceed a threshold
+This project showcases a **controlled rollout strategy** for deploying a PyTorch deep learning model via a Flask API. Using GitHub Actions and Docker, it performs **model validation (ONNX)**, **load testing (Locust)**, and a **custom NGINX-based canary deployment** that gradually shifts traffic from a stable release to a new one. 
+
+The system includes built-in **error monitoring and automatic rollback** to ensure safe delivery of ML updates. Ideal for production-grade inference workflows where reliability and resilience are critical.
+
 
 ---
 
